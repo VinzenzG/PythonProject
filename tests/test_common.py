@@ -2,7 +2,8 @@ import numpy as np
 from numpy import int8
 
 from agents.common import BoardPiece, NO_PLAYER, PLAYER1, PLAYER2, pretty_print_board, initialize_game_state, \
-    test_game_string, apply_player_action, string_to_board
+    test_game_string, apply_player_action, string_to_board, connected_four, test_horizontal_string, \
+    test_vertical_string, test_diagonal_string, test_diagonalr_string
 
 
 def test_initialize_game_state():
@@ -59,7 +60,23 @@ def test_apply_player_action():
     assert apply_player_action(board, action, player, copy)[0][0] == 1
     assert apply_player_action(boardhigh, 1, player, copy)[2][1] == 1
 
+
 def test_connected_four():
     board = string_to_board(test_game_string())
+    boardh = string_to_board(test_horizontal_string())
+    boardv = string_to_board(test_vertical_string())
+    boardd = string_to_board(test_diagonal_string())
+    boarddr = string_to_board(test_diagonalr_string())
+
+    check = connected_four(board, PLAYER1)
+    checkh = connected_four(boardh, PLAYER1)
+    checkv = connected_four(boardv, PLAYER1)
+    checkdl = connected_four(boardd, PLAYER1)
+    checkdr = connected_four(boarddr, PLAYER1)
 
 
+    assert isinstance(check, bool)
+    # check
+    assert checkh == True
+    assert checkv == True
+    assert checkdl == True
