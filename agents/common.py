@@ -6,7 +6,6 @@ BoardPiece = np.int8  # The data type (dtype) of the board
 NO_PLAYER = BoardPiece(0)  # board[i, j] == NO_PLAYER where the position is empty
 PLAYER1 = BoardPiece(1)  # board[i, j] == PLAYER1 where player 1 (player to move first) has a piece
 PLAYER2 = BoardPiece(2)  # board[i, j] == PLAYER2 where player 2 (player to move second) has a piece
-PLAYERtest = BoardPiece(5)
 BoardPiecePrint = str  # dtype for string representation of BoardPiece
 NO_PLAYER_PRINT = BoardPiecePrint(' ')
 PLAYER1_PRINT = BoardPiecePrint('X')
@@ -40,23 +39,28 @@ def add_last_line():
 
 
 def test_game_string() -> str:
-    return "|==============|\n|              |\n|              |\n|    X X       |\n|    O X X     |\n|  O X O O     |\n|  O O X X     |\n|==============|\n|0 1 2 3 4 5 6 |"
+    return "|==============|\n|              |\n|              |\n|    X X       |\n|    O X X     |\n|  O X O O     " \
+           "|\n|  O O X X     |\n|==============|\n|0 1 2 3 4 5 6 | "
 
 
 def test_horizontal_string() -> str:
-    return "|==============|\n|              |\n|              |\n|    X X       |\n|    O X X     |\n|  O X O O     |\n|  X X X X     |\n|==============|\n|0 1 2 3 4 5 6 |"
+    return "|==============|\n|              |\n|              |\n|    X X       |\n|    O X X     |\n|  O X O O     " \
+           "|\n|  X X X X     |\n|==============|\n|0 1 2 3 4 5 6 | "
 
 
 def test_vertical_string() -> str:
-    return "|==============|\n|              |\n|              |\n|    X X       |\n|    O X X     |\n|  O X X O     |\n|  O O X X     |\n|==============|\n|0 1 2 3 4 5 6 |"
+    return "|==============|\n|              |\n|              |\n|    X X       |\n|    O X X     |\n|  O X X O     " \
+           "|\n|  O O X X     |\n|==============|\n|0 1 2 3 4 5 6 | "
 
 
 def test_diagonal_string() -> str:
-    return "|==============|\n|              |\n|              |\n|    X X X     |\n|    O X X     |\n|  O X O O     |\n|  X O X X     |\n|==============|\n|0 1 2 3 4 5 6 |"
+    return "|==============|\n|              |\n|              |\n|    X X X     |\n|    O X X     |\n|  O X O O     " \
+           "|\n|  X O X X     |\n|==============|\n|0 1 2 3 4 5 6 | "
 
 
 def test_diagonalr_string() -> str:
-    return "|==============|\n|              |\n|              |\n|    X X       |\n|    O X X     |\n|  O X O X     |\n|  O O X X X   |\n|==============|\n|0 1 2 3 4 5 6 |"
+    return "|==============|\n|              |\n|              |\n|    X X       |\n|    O X X     |\n|  O X O X     " \
+           "|\n|  O O X X X   |\n|==============|\n|0 1 2 3 4 5 6 | "
 
 
 def pretty_print_board(board: np.ndarray) -> str:
@@ -108,7 +112,6 @@ def string_to_board(pp_board: str) -> np.ndarray:
     """
     row, column = 6, 7
     field = np.ndarray((row, column), BoardPiece())
-    field.fill(PLAYERtest)
     lines = pp_board.split('\n')
     lines.pop(0)
     lines.pop(7)
@@ -174,7 +177,7 @@ def connected_four(
     # vertical check
     for y in range(cols):
         for x in range(rows_edge):
-            if np.all(board[x:x + 4, y]):
+            if np.all(board[x:x + 4, y] == player):
                 return True
 
     # diagonal left and right
@@ -183,7 +186,7 @@ def connected_four(
             block = board[x:x + 4, y:y + 4]
             if np.all(np.diag(block) == player):
                 return True
-            if np.all(np.diag(block[::-1,:]) == player):
+            if np.all(np.diag(block[::-1, :]) == player):
                 return True
     return False
 
