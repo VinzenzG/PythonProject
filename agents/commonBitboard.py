@@ -1,8 +1,10 @@
+import string
 from enum import Enum
 from typing import Optional, Callable, Tuple
 
 import numpy
 import numpy as np
+from numba import uint64
 
 BoardPiece = np.int8  # The data type (dtype) of the board
 NO_PLAYER = BoardPiece(0)  # board[i, j] == NO_PLAYER where the position is empty
@@ -15,22 +17,25 @@ PLAYER2_PRINT = BoardPiecePrint('O')
 moves = np.int8
 COUNTM = 0  # count moves
 PlayerAction = np.int8  # The column to be played
+WIDTH = 7
+HEIGHT = 6
 
 
-class GameState(Enum):
-    IS_WIN = 1
-    IS_DRAW = -1
-    STILL_PLAYING = 0
+# class GameState(Enum):
+#     IS_WIN = 1
+#     IS_DRAW = -1
+#     STILL_PLAYING = 0
 
 
-def initialize_game_state() -> np.ndarray:
-    """
-    Returns an ndarray, shape (6, 7) and data type (dtype) BoardPiece, initialized to 0 (NO_PLAYER).
-    """
-    row, column = 6, 7
-    field = np.ndarray((row, column), BoardPiece())
-    field.fill(NO_PLAYER)
-    return field
+# def initialize_game_state(seq: string) -> np.ndarray:
+#     """
+#     Returns an ndarray, shape (6, 7) and data type (dtype) BoardPiece, initialized to 0 (NO_PLAYER).
+#     """
+#
+#     row, column = 6, 7
+#     field = np.ndarray((row, column), BoardPiece())
+#     field.fill(NO_PLAYER)
+#     return field
 
 
 def get_moves():
@@ -86,6 +91,58 @@ def pretty_print_board(board: np.ndarray) -> str:
     return result
 
 
+def key(current: int, mask: int) -> int:
+    return current + mask
+
+
+def can_play(col: int, mask: int) -> bool:
+    return (mask & top_mask(col)) == 0
+
+
+def top_mask(col: int) -> int:
+    top_mask = (int(1) << (HEIGHT - 1)) << col * (HEIGHT + 1)
+    return top_mask
+
+
+def bottom_mask(col: int) -> int:
+    bottom_mask = int(1) << col * (HEIGHT + 1)
+    return bottom_mask
+
+
+def column_mask(col: int) -> int:
+    columnone = (int(1) << HEIGHT) - 1
+    column_mask = columnone << col * (HEIGHT + 1)
+    return column_mask
+
+
+def apply_player_action(col: int, current_pos: int, mask: int) -> Tuple[int, int]:
+    current_pos ^= mask
+    mask |= mask + bottom_mask(col)
+    global COUNTM
+    COUNTM = COUNTM + 1
+    return current_pos, mask
+
+
+# return current, mask, moves
+def play_given_state(game: string) -> Tuple[int, int, int]:
+    current = 0
+    mask = 0
+    for move in game:
+        col = (int(move) - 1)
+        if col < 0 or col >= WIDTH or not can_play(col, 0) or isWinningMove(col, current, mask): return 0, 0, 0
+        current, mask = apply_player_action(col, current, mask)
+        global COUNTM
+        COUNTM = COUNTM + 1
+
+    return current, mask, len(game)
+
+
+def isWinningMove(col: int, current: int, mask: int) -> bool:
+    pos = current
+    pos |= (mask + bottom_mask(col)) & column_mask(col)
+    return connected_four(pos)
+
+
 def string_to_board(pp_board: str) -> np.ndarray:
     """
     Takes the output of pretty_print_board and turns it back into an ndarray.
@@ -118,33 +175,32 @@ def string_to_board(pp_board: str) -> np.ndarray:
     return field
 
 
-def apply_player_action(
-        board: np.ndarray, action: PlayerAction, player: BoardPiece, copy: bool = False
-) -> np.ndarray:
-    """
-    Sets board[i, action] = player, where i is the lowest open row. The modified
-    board is returned. If copy is True, makes a copy of the board before modifying it.
-    """
+# def apply_player_action(
+#         board: np.ndarray, action: PlayerAction, player: BoardPiece, copy: bool = False
+# ) -> np.ndarray:
+#     """
+#     Sets board[i, action] = player, where i is the lowest open row. The modified
+#     board is returned. If copy is True, makes a copy of the board before modifying it.
+#     """
+#
+#     if copy:
+#         cop = board
+#
+#     for x in range(6):
+#         if board[x][action] == NO_PLAYER:
+#             board[x][action] = player
+#
+#             break
+#
+#     # For counting moves
+#     global COUNTM
+#     COUNTM = numpy.count_nonzero(board)
+#
+#     return board
 
-    if copy:
-        cop = board
 
-    for x in range(6):
-        if board[x][action] == NO_PLAYER:
-            board[x][action] = player
-
-            break
-
-    # For counting moves
-    global COUNTM
-    COUNTM = numpy.count_nonzero(board)
-
-    return board
-
-
-def connected_four(
-        board: np.ndarray, player: BoardPiece, last_action: Optional[PlayerAction] = None,
-) -> bool:
+def connected_four(pos: int
+                   ) -> bool:
     """
     Returns True if there are four adjacent pieces equal to `player` arranged
     in either a horizontal, vertical, or diagonal line. Returns False otherwise.
@@ -152,56 +208,25 @@ def connected_four(
     If desired, the last action taken (i.e. last column played) can be provided
     for potential speed optimisation.
     """
-    rows, cols = board.shape
-    rows_edge = rows - 3
-    cols_edge = cols - 3
 
-    # horizontal check
-    for x in range(rows):
-        for y in range(cols_edge):
-            if np.all(board[x, y:y + 4] == player):
-                return True
+    # horizontal
+    m = pos & (pos >> (HEIGHT + 1))
+    if m & (m >> (2 * (HEIGHT + 1))):
+        return True
 
-    # vertical check
-    for y in range(cols):
-        for x in range(rows_edge):
-            if np.all(board[x:x + 4, y] == player):
-                return True
+    # diagonal
+    m = pos & (pos >> HEIGHT)
+    if m & (m >> (2 * HEIGHT)):
+        return True
 
-    # diagonal left and right
-    for x in range(rows_edge):
-        for y in range(cols_edge):
-            block = board[x:x + 4, y:y + 4]
-            if np.all(np.diag(block) == player):
-                return True
-            if np.all(np.diag(block[::-1, :]) == player):
-                return True
+    # diagonal2
+    m = pos & (pos >> HEIGHT + 2)
+    if m & (m >> (2 * (HEIGHT + 2))):
+        return True
+
+    # vertical
+    m = pos & (pos >> 1)
+    if m & (m >> 2):
+        return True
+
     return False
-
-
-def check_end_state(
-        board: np.ndarray, player: BoardPiece, last_action: Optional[PlayerAction] = None,
-) -> GameState:
-    """
-    Returns the current game state for the current `player`, i.e. has their last
-    action won (GameState.IS_WIN) or drawn (GameState.IS_DRAW) the game,
-    or is play still on-going (GameState.STILL_PLAYING)?
-    """
-    con = connected_four(board, player, last_action)
-
-    if con:
-        return GameState.IS_WIN
-    elif (False, True)[COUNTM < 42]:
-        return GameState.STILL_PLAYING
-    else:
-        return GameState.IS_DRAW
-
-
-class SavedState:
-    pass
-
-
-GenMove = Callable[
-    [np.ndarray, BoardPiece, Optional[SavedState]],  # Arguments for the generate_move function
-    Tuple[PlayerAction, Optional[SavedState]]  # Return type of the generate_move function
-]

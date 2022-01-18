@@ -1,8 +1,8 @@
 import numpy as np
 from typing import Optional, Callable
+from agents.agent_minimax.alphabetapruning import generate_alpha_beta
 
 from agents.agent_minimax.minimax import generate_minimax
-from agents.agent_minimax.al import generate_minimax
 from agents.common import PlayerAction, BoardPiece, SavedState, GenMove
 from agents.agent_random import generate_move
 

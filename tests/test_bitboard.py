@@ -5,6 +5,46 @@ from agents.common import BoardPiece, NO_PLAYER, PLAYER1, PLAYER2, pretty_print_
     apply_player_action, string_to_board, connected_four, check_end_state, GameState
 
 
+def test_top_mask():
+    from agents.commonBitboard import top_mask
+
+    res = top_mask(1)
+    ret = top_mask(6)
+    assert res == 4096  # 2.[1] Spalte letzte Zeile
+    print(res)
+    assert ret == 140737488355328  # 7.[6] 47 shiften
+
+
+def test_bottom_mask():
+    from agents.commonBitboard import bottom_mask
+
+    res = bottom_mask(1)
+    ret = bottom_mask(6)
+    assert res == 128  # 2.[1] Spalte letzte Zeile
+    print(res)
+    assert ret == 4398046511104  # 7.[6] 47 shiften
+
+
+def test_can_play():
+    from agents.commonBitboard import can_play
+    res = can_play(0, 32)  # letzte Reihe belegt false
+    ret = can_play(1, 32)  # frei true
+    assert res == False
+    assert ret == True
+
+
+def test_play():
+    from agents.commonBitboard import play
+
+    res, mask = play(int(0), int(0), int(0))  # letzte Reihe belegt false
+    ret, mask2 = play(1, 0, 0)  # frei true
+    assert res == 0
+    assert mask == 1
+
+    assert ret == 0
+    assert mask2 == 128
+
+
 def test_initialize_game_state():
     from agents.common import initialize_game_state
 
@@ -73,7 +113,6 @@ def test_connected_four():
     checkdl = connected_four(boardd, PLAYER1)
     checkdr = connected_four(boarddr, PLAYER1)
 
-
     assert isinstance(check, bool)
     # check
     assert checkh == True
@@ -87,7 +126,7 @@ def test_check_end_state():
     board_still_playing = string_to_board(test_game_string())
     board_is_draw = string_to_board(test_draw_string())
 
-    assert isinstance(check_end_state(board_still_playing,PLAYER1), GameState)
+    assert isinstance(check_end_state(board_still_playing, PLAYER1), GameState)
     assert check_end_state(board_player_one_win, PLAYER1) == GameState.IS_WIN
     assert check_end_state(board_player_two_win, PLAYER2) == GameState.IS_WIN
     assert check_end_state(board_still_playing, PLAYER1) == GameState.STILL_PLAYING
@@ -100,9 +139,9 @@ def test_game_string() -> str:
            "|              |\n" \
            "|    X X       |\n" \
            "|    O X X     |\n" \
-           "|  O X O O     |\n"\
-           "|  O O X X     |\n"\
-           "|==============|\n"\
+           "|  O X O O     |\n" \
+           "|  O O X X     |\n" \
+           "|==============|\n" \
            "|0 1 2 3 4 5 6 |"
 
 
@@ -176,4 +215,3 @@ def test_draw_string() -> str:
            "|O O O X X O O |\n" \
            "|==============|\n" \
            "|0 1 2 3 4 5 6 |"
-

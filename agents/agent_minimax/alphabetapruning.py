@@ -16,7 +16,7 @@ score_dict = {
 
 def generate_alpha_beta(
         board: np.ndarray, player: BoardPiece, save_state: Optional[SavedState] = None
-) -> Tuple[PlayerAction, Optional[SavedState]]:
+) -> Tuple[PlayerAction, Optional[SavedState], int]:
     score, action, save_state = minimax(board, player, DEPTH, -math.inf, math.inf, save_state)
     return action, save_state
 
