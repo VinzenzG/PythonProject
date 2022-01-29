@@ -2,12 +2,15 @@ from typing import Tuple
 import numpy as np
 from numpy.lib import math
 
-from agents.commonBitboard import isWinningMove, can_play, PlayerAction, get_moves, apply_player_action
+from agents import TranspositionTable
+from agents.commonBitboard import isWinningMove, can_play, PlayerAction, get_moves, apply_player_action, key
 
 WIDTH = 7
 HEIGHT = 6
 nodeCount = np.long
 nodeCount = 0
+
+transpositiontable = TranspositionTable()
 
 
 def count_node():
@@ -20,7 +23,7 @@ def cancel_nodes():
     nodeCount = 0
 
 
-def generate_new_bitboard(current: int, mask: int) -> Tuple[PlayerAction, int, int]:
+def generate_new_Transpositiontable(current: int, mask: int) -> Tuple[PlayerAction, int, int]:
     score, action = negamax(current, mask, -math.inf, math.inf)
     explored_nodes = nodeCount
     cancel_nodes()
@@ -53,20 +56,25 @@ def negamax(
     # (math.inf, -math.inf)[player == PLAYER1]
     best_act = -1
     actions = []
+
     for x in range(WIDTH):
         if can_play(x, mask):
             actions.append(x)
-        if can_play(x, mask) and isWinningMove(x, current, mask):
+        if can_play(x, mask) and isWinningMove(x, current, mask):  # check if current can win
             return int((WIDTH * HEIGHT + 1 - get_moves()) / 2), -1
 
-    actions = order_from_middle(actions)
-
     maximal = int((WIDTH * HEIGHT - 1 - get_moves()) / 2)
+    k = key(current, mask)
+    val = transpositiontable[k]
+    if val is not None:
+        pass
+
     if beta > maximal:
         beta = maximal
         if alpha >= beta:
             return beta, -1
 
+    actions = order_from_middle(actions)
     for action in actions:
 
         copycurr, copymask = apply_player_action(action, current, mask)

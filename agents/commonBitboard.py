@@ -4,7 +4,6 @@ from typing import Optional, Callable, Tuple
 
 import numpy
 import numpy as np
-from numba import uint64
 
 BoardPiece = np.int8  # The data type (dtype) of the board
 NO_PLAYER = BoardPiece(0)  # board[i, j] == NO_PLAYER where the position is empty
@@ -41,6 +40,8 @@ HEIGHT = 6
 def get_moves():
     return COUNTM
 
+def count_moves(mask: int):
+    return bin(mask).replace("0b", "").count('1')
 
 def add_first_line():
     return "|==============|"
@@ -119,7 +120,7 @@ def apply_player_action(col: int, current_pos: int, mask: int) -> Tuple[int, int
     current_pos ^= mask
     mask |= mask + bottom_mask(col)
     global COUNTM
-    COUNTM = COUNTM + 1
+    COUNTM = count_moves(mask)
     return current_pos, mask
 
 
@@ -131,8 +132,6 @@ def play_given_state(game: string) -> Tuple[int, int, int]:
         col = (int(move) - 1)
         if col < 0 or col >= WIDTH or not can_play(col, 0) or isWinningMove(col, current, mask): return 0, 0, 0
         current, mask = apply_player_action(col, current, mask)
-        global COUNTM
-        COUNTM = COUNTM + 1
 
     return current, mask, len(game)
 
